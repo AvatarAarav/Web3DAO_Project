@@ -1,6 +1,7 @@
 // This is a script for deploying your contracts. You can adapt it to deploy
 // yours, or create new ones.
 
+const { ethers } = require("hardhat");
 const path = require("path");
 
 async function main() {
@@ -21,9 +22,11 @@ async function main() {
   );
 
   console.log("Account balance:", (await deployer.getBalance()).toString());
-
+  const Token = await ethers.getContractFactory("Token");
+  const token = await Token.deploy();
+  await token.deployed()
   const DAO = await ethers.getContractFactory("DAO");
-  const dao = await DAO.deploy();
+  const dao = await DAO.deploy(token.address);
   await dao.deployed();
 
   console.log("DAO Contract address:", dao.address);

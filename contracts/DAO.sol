@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.7;
+pragma solidity ^0.8.20;
+
+import "./Token.sol";  // Import the MyToken contract
 
 contract DAO {
     address public owner;
@@ -7,6 +9,8 @@ contract DAO {
     uint256 public memberCount;
     uint256 public acceptedProporsalsIdsCount;
     uint256 public joinRequestCount;
+    Token public tokenContract;  // Reference to the MyToken contract
+
     struct Proposal {
         uint256 id;
         string message;
@@ -22,7 +26,6 @@ contract DAO {
 
     mapping(address => bool) public members;
     mapping(address => uint256) public lastIdeaPosted;
-    mapping(address => uint256) public balance;
     mapping(address => uint256) public lastRewardDistribTime;
     mapping(address => string) public joinRequestString;
 
@@ -43,22 +46,23 @@ contract DAO {
         _;
     }
 
-    constructor() {
+    constructor(Token _tokenContract) {
         owner = msg.sender;
+        tokenContract = _tokenContract;  // Initialize the MyToken contract
         members[msg.sender] = true;
-        balance[msg.sender] = 1000;
-        lastIdeaPosted[msg.sender]=block.timestamp;
+        lastIdeaPosted[msg.sender] = block.timestamp;
         memberCount = 1;
-        lastRewardDistribTime[msg.sender]=block.timestamp;
+        lastRewardDistribTime[msg.sender] = block.timestamp;
         proposalCount = 0;
-        joinRequestCount=0;
-        acceptedProporsalsIdsCount=0;
+        joinRequestCount = 0;
+        acceptedProporsalsIdsCount = 0;
     }
+
     function provideStayingReward() public {
         // uint interval=604800; //7 days
         uint interval=60; //1min
         if(lastRewardDistribTime[msg.sender]+interval<block.timestamp) {
-            balance[msg.sender]+=50;
+            tokenContract.mint(msg.sender,50);
             lastRewardDistribTime[msg.sender]=block.timestamp;
         }
     }
@@ -70,11 +74,12 @@ contract DAO {
         uint penalityTime=60; //1min 
         if(lastIdeaPosted[msg.sender]+interval<block.timestamp){ 
             uint256 penality=10*(block.timestamp-lastIdeaPosted[msg.sender])/penalityTime;
-            if(balance[msg.sender]>penality){
-                balance[msg.sender]-=penality;
+            uint256 balance=tokenContract.balanceOf(msg.sender);
+            if(balance>penality){
+                tokenContract.burn(msg.sender,penality);
             }
             else{
-                balance[msg.sender]=0;
+                tokenContract.burn(msg.sender,balance);
             }
             lastIdeaPosted[msg.sender]=block.timestamp;
         }  
@@ -85,11 +90,15 @@ contract DAO {
         emit TokenUpdated("Tokens have been Updated");
     }
 
+    function returnBalance(address add)public view returns(uint256){
+        return tokenContract.checkBalance(add);
+    }
+
     function addMember(address _member) public onlyOwner {
         require(members[_member]==false,"Already a Member");
         memberCount++;
         members[_member] = true;
-        balance[_member] = 100;
+        tokenContract.mint(_member,100);
         lastIdeaPosted[_member]=block.timestamp;
         emit MembersUpdated("Member Added");
     }
@@ -119,9 +128,8 @@ contract DAO {
         newProposal.posted = false;
         newProposal.proposer = msg.sender;
         lastIdeaPosted[msg.sender]=block.timestamp;
-        balance[msg.sender]+=5;
+        tokenContract.mint(msg.sender, 5);
         emit ProposalCreatedEvent(newProposalId, _message, msg.sender);
-
     }
 
     function vote(uint256 _proposalId) public onlyMembers {
@@ -131,8 +139,9 @@ contract DAO {
 
         
         uint256 required_balance=(proposal.voters[msg.sender]**2)+1;
-        require(balance[msg.sender]>required_balance,"Not Enough Tokens");
-        balance[msg.sender]-=required_balance;
+        
+        require(tokenContract.balanceOf(msg.sender)>required_balance,"Not Enough Tokens");
+        tokenContract.burn(msg.sender,required_balance);
         proposal.voters[msg.sender]++;
         proposal.voteCount++;
 

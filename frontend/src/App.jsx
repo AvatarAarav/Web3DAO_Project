@@ -10,7 +10,7 @@ import Member from "./Member";
 import NonMember from "./NonMember";
 import { useDispatch, useSelector } from "react-redux";
 import { setSelectedAddress, setBalance, setDAO, setError, setDisabled } from "./store/userSlice";
-import { setProporsals, setAcceptedProporsals,setJoinedProporsals } from "./store/userSlice";
+import { setProporsals, setAcceptedProporsals, setJoinedProporsals } from "./store/userSlice";
 
 
 const HARDHAT_NETWORK_ID = '31337';
@@ -73,18 +73,18 @@ const App = () => {
   };
   const updateBalance = async () => {
     console.log('het')
-    const dao=globalDAO
-    const address=globalAddress
-    const balance = await dao.balance(address);
+    const dao = globalDAO
+    const address = globalAddress
+    const balance = await dao.returnBalance(address);
     dispatch(setBalance(balance))
   };
   const updateActiveMembers = async () => {
-    const dao=globalDAO
+    const dao = globalDAO
     setActiveMembers(await dao.memberCount())
   };
   const fetchProporsals = async () => {
-    const userDAO=globalDAO
-    const selectedAddress=globalAddress
+    const userDAO = globalDAO
+    const selectedAddress = globalAddress
     const proposalCount = await userDAO.proposalCount();
     const tempArray = []
     for (var i = proposalCount - 1; i >= 0; i--) {
@@ -98,7 +98,7 @@ const App = () => {
   }
 
   const fetchAcceptedProporsals = async () => {
-    const userDAO=globalDAO
+    const userDAO = globalDAO
     const proposalCount = await userDAO.acceptedProporsalsIdsCount();
     const tempArray = []
     for (var i = proposalCount - 1; i >= 0; i--) {
@@ -109,7 +109,7 @@ const App = () => {
     dispatch(setAcceptedProporsals(tempArray))
   }
   const fetchJoinRequests = async () => {
-    const userDAO=globalDAO
+    const userDAO = globalDAO
     const requestCount = await userDAO.joinRequestCount();
     const tempArray = []
     for (var i = requestCount - 1; i >= 0; i--) {
@@ -120,13 +120,13 @@ const App = () => {
     }
     dispatch(setJoinedProporsals(tempArray))
   }
-  const listenEvents=(dao)=>{
-    dao.on('TokenUpdated',()=>updateBalance())
-    dao.on('ProposalCreatedEvent',()=>{fetchProporsals();updateBalance()})
-    dao.on('Voted',()=>{fetchProporsals();updateBalance()})
-    dao.on('ProposalPassed',()=>{fetchAcceptedProporsals()})
-    dao.on('MembersUpdated',()=>updateActiveMembers())
-    dao.on('JoiningReqEvent',()=>fetchJoinRequests())
+  const listenEvents = (dao) => {
+    dao.on('TokenUpdated', () => updateBalance())
+    dao.on('ProposalCreatedEvent', () => { fetchProporsals(); updateBalance() })
+    dao.on('Voted', () => { fetchProporsals(); updateBalance() })
+    dao.on('ProposalPassed', () => { fetchAcceptedProporsals() })
+    dao.on('MembersUpdated', () => updateActiveMembers())
+    dao.on('JoiningReqEvent', () => fetchJoinRequests())
   }
   const initializeEthers = async () => {
     const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -135,7 +135,7 @@ const App = () => {
       DAOArtifact.abi,
       provider.getSigner(0)
     );
-    return { provider, dao  };
+    return { provider, dao };
   };
 
   const getUserData = async (dao, address) => {
@@ -167,11 +167,11 @@ const App = () => {
 
       checkNetwork();
 
-      const { provider, dao} = await initializeEthers(); //getting the blank DAO and metamask provider
+      const { provider, dao } = await initializeEthers(); //getting the blank DAO and metamask provider
       dispatch(setSelectedAddress(address))
-      const userDao =dao.connect(provider.getSigner(0)); //connecting contract to user
-      globalDAO=userDao
-      globalAddress=address
+      const userDao = dao.connect(provider.getSigner(0)); //connecting contract to user
+      globalDAO = userDao
+      globalAddress = address
       updateActiveMembers(userDao)
       dispatch(setDAO(userDao))
       getUserData(userDao, address);
@@ -186,8 +186,8 @@ const App = () => {
         checkNetwork();
         const { provider, dao } = await initializeEthers();
         const userDao = dao.connect(provider.getSigner(0));
-        globalDAO=userDao
-        globalAddress=address
+        globalDAO = userDao
+        globalAddress = address
         updateActiveMembers(userDao)
         dispatch(setDisabled(true))
         dispatch(setDAO(userDao))
@@ -224,15 +224,42 @@ const App = () => {
     <>
       <nav className="navbar navbar-dark bg-primary">
         <div className="text-center w-100">
-          <h1 className="display-2" href="#">SILLY DAO &#128540;</h1>
-          <h6>Active Members:{parseInt(activeMembers._hex, 16)} &nbsp;<button className="btn" onClick={() => updateActiveMembers(userDAO)}> <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" className="bi bi-bootstrap-reboot" viewBox="0 0 16 16">
-            <path d="M1.161 8a6.84 6.84 0 1 0 6.842-6.84.58.58 0 1 1 0-1.16 8 8 0 1 1-6.556 3.412l-.663-.577a.58.58 0 0 1 .227-.997l2.52-.69a.58.58 0 0 1 .728.633l-.332 2.592a.58.58 0 0 1-.956.364l-.643-.56A6.812 6.812 0 0 0 1.16 8z" />
-            <path d="M6.641 11.671V8.843h1.57l1.498 2.828h1.314L9.377 8.665c.897-.3 1.427-1.106 1.427-2.1 0-1.37-.943-2.246-2.456-2.246H5.5v7.352h1.141zm0-3.75V5.277h1.57c.881 0 1.416.499 1.416 1.32 0 .84-.504 1.324-1.386 1.324h-1.6z" />
-          </svg></button>
-          </h6>
+          <h1 className="display-2 fw-bold text-dark" href="#">SILLY DAO &#128540;</h1>
+          <h6 className="text-dark">Active Members:{parseInt(activeMembers._hex, 16)}</h6>
+          <button type="button" class="btn btn-dark" data-mdb-toggle="modal" data-mdb-target="#exampleModal">
+            RULES
+          </button>
+
         </div>
 
       </nav>
+      {/*  Modal  */}
+      <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">Not So Silly Rules of Silly DAO</h5>
+              <button type="button" class="btn-close" data-mdb-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <ul class="list-group">
+                <li class="list-group-item">Only Silly Peoples are Allowed here</li>
+                <li class="list-group-item list-group-item-primary">You have to post 1 idea everyday</li>
+                <li class="list-group-item list-group-item-secondary">On every login, You have to update your Tokens count</li>
+                <li class="list-group-item list-group-item-success">You will be provided 50 token after every 7 days</li>
+                <li class="list-group-item list-group-item-danger">You will lose 10 tokens for each day of not posting</li>
+                <li class="list-group-item list-group-item-warning">Proposed Idea will be accepted after getting more than 50% votes</li>
+                <li class="list-group-item list-group-item-info">Once Idea is accepted, You have to post it to your social media accounts</li>
+                <li class="list-group-item list-group-item-light">On every idea posted, You will get 5 tokens</li>
+                <li class="list-group-item list-group-item-dark">Exponential Voting is used everywhere</li>
+              </ul>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-mdb-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
       <div>
         {window.ethereum === undefined ? (
           <NoWalletDetected />
