@@ -4,17 +4,20 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setJoinedProporsals } from './store/userSlice';
 
 const JoinRequests = () => {
-    const  userDAO = useSelector(state=>state.user.dao)
-    const dispatch=useDispatch()
-    const messages = useSelector(state=>state.user.joinProporsals)
+    const disabled=useSelector(state=>state.user.disabled)
+    const userDAO = useSelector(state => state.user.dao)
+    const dispatch = useDispatch()
+    const messages = useSelector(state => state.user.joinProporsals)
     const fetchMessages = async () => {
-        const requestCount = await userDAO.joinRequestCount();
+        const jointRequestCount = await userDAO.joinRequestCount();
         const tempArray = []
-        for (var i = requestCount - 1; i >= 0; i--) {
-            const tempAddress=await userDAO.joinRequests(i)
-            const tempProp = await userDAO.joinRequestString(tempAddress);
-
-            tempArray.push({proposer:tempAddress,message:tempProp})
+        for (var i = jointRequestCount - 1; i >= 0; i--) {
+            let tempProp=await userDAO.joinRequests(i);
+            if(!tempProp.member){
+                const prize=await userDAO.joinVotePrize(i)
+                tempProp={prize,...tempProp}
+                tempArray.push(tempProp)
+            }
         }
         dispatch(setJoinedProporsals(tempArray))
     };
@@ -25,29 +28,49 @@ const JoinRequests = () => {
     const handleRefresh = () => {
         fetchMessages()
     };
+    
+    const handleVote = async (messageId) => {
+        try {
+          const event=await userDAO.voteJoinRequests(messageId);
+        } catch (error) {
+          console.error(error)
+        }
+      };
 
     return (
-        <Container>
+        <Container className='px-5 mt-5'>
             <div className='d-flex justify-content-between'>
-                <h1 className="text-center">JOIN REQUESTS</h1>
+                <h1 className="text-center">Join Requests</h1>
                 <Button variant="secondary" className="refresh-button " onClick={handleRefresh}>
                     Refresh
                 </Button>
             </div>
-            <div style={{ height: '250px', overflowY: 'auto' }}>
+            <div style={{ height: '300px', overflowY: 'auto' }}>
                 <ListGroup>
                     {messages.map((message) => (
-                        <ListGroupItem as="li" className='my-3  align-items-start' key={message.proposer}>
-
-                            <div>
-
-                                <strong>Proposer:</strong> {message.proposer}
+                        <ListGroupItem as="li" className='my-3 d-flex justify-content-between align-items-start' key={parseInt(message.id._hex, 16)}>
+                            <div className="ms-2 me-auto" >
+                                <div>
+                                    <strong>Message ID:</strong> {parseInt(message.id._hex, 16)}
+                                </div>
+                                <div>
+                                    <strong>Message:</strong> {message.message}
+                                </div>
+                                <div>
+                                    <strong>Candidate:</strong> {message.candidate}
+                                </div>
                             </div>
-                            <br />
                             <div>
-                                <strong>Message:</strong> {message.message}
+                                <div>
+                                    <strong>Vote_Count:</strong>{parseInt(message.voteCount._hex, 16)}
+                                </div>
+                                <Button variant="primary" disabled={disabled} onClick={() => handleVote(message.id)}>
+                                    Vote
+                                </Button>
+                                <div>
+                                    <strong>Vote_Prize:</strong>{parseInt(message.prize._hex, 16)}
+                                </div>
                             </div>
-
 
                         </ListGroupItem>
                     ))}

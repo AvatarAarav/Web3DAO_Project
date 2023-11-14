@@ -29,18 +29,18 @@ function Owner () {
     <div className='text-center h5'>Public Address: {selectedAddress}</div>
     <div className='text-center h5 mb-3'>Availaible Tokens: {parseInt(balance._hex,16)}</div>
     {disabled &&<div className='text-center mb-3'><button onClick={updateTokens} className='btn text-center btn-success '>Update Tokens (Before Posting/Voting)</button></div>}
-    <div className='row'>
-        <div className='col-3'>
+    <div className='row my-4'>
+        <div className='col-6'>
         <AddMember addMember={userDAO.addMember}/>
         </div>
-        <div className='col-3'>
+        <div className='col-6'>
         <RemoveMember removeMember={userDAO.removeMember}/>
         </div>
-        <div className='col-6'>
-        <JoinRequests/>
-        </div>
+        
     </div>
-    
+    <div className='row'>
+    <JoinRequests/>
+    </div>
     <div className='row'>
       <ProposeForm proposeMessage={userDAO.proposeMessage}/>
       {/* <Proposals userDAO={userDAO} /> */}

@@ -4,6 +4,7 @@ import Proposals from './Proposals'
 import AcceptedProporsals from './AcceptedProporsals'
 import ProposeForm from './ProposeForm'
 import { setDisabled } from './store/userSlice'
+import JoinRequests from './JoinRequests'
 function Member() {
   const dispatch=useDispatch()
   const  userDAO = useSelector(state=>state.user.dao)
@@ -24,6 +25,9 @@ function Member() {
     <div className='text-center h5'>Public Address: {selectedAddress}</div>
     <div className='text-center h5 mb-3'>Availaible Tokens:  {parseInt(balance._hex,16)}</div>
     {disabled &&<div className='text-center mb-3'><button onClick={updateTokens} className='btn text-center btn-success '>Update Tokens (Before Posting/Voting)</button></div>}
+    <div className='row'>
+    <JoinRequests/>
+    </div>
     <div className='row'>
       <ProposeForm proposeMessage={userDAO.proposeMessage}/>
 

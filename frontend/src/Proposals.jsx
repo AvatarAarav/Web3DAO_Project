@@ -6,7 +6,6 @@ import { setProporsals } from './store/userSlice';
 const Proporsals = () => {
   const disabled=useSelector(state=>state.user.disabled)
   const  userDAO = useSelector(state=>state.user.dao)
-  const selectedAddress=useSelector((state)=>state.user.selectedAddress)
   const dispatch=useDispatch()
   const messages=useSelector(state=>state.user.proporsals)
   const fetchMessages = async () => {
@@ -15,9 +14,11 @@ const Proporsals = () => {
     for (var i = proposalCount - 1; i >= 0; i--) {
      
       let tempProp=await userDAO.proposals(i);
-      const prize=await userDAO.votePrize(selectedAddress,i)
-      tempProp={prize,...tempProp}
-      tempArray.push(tempProp)
+      if(!tempProp.posted){
+        const prize=await userDAO.votePrize(i)
+        tempProp={prize,...tempProp}
+        tempArray.push(tempProp)
+      }
     }
     dispatch(setProporsals(tempArray))
   };
@@ -65,8 +66,8 @@ const Proporsals = () => {
                 <div>
                   <strong>Vote_Count:</strong>{parseInt(message.voteCount._hex, 16)}
                 </div>
-                <Button variant="primary" disabled={message.posted || disabled} onClick={() => handleVote(message.id)}>
-                  {message.posted?"Posted":"Vote"}
+                <Button variant="primary" disabled={ disabled} onClick={() => handleVote(message.id)}>
+                  Vote
                 </Button>
                 <div>
                   <strong>Vote_Prize:</strong>{parseInt(message.prize._hex, 16)}

@@ -20,9 +20,18 @@ contract DAO {
         mapping(address => uint256) voters;
     }
 
+    struct JoinRequest{
+        uint256 id;
+        string message;
+        address candidate;
+        bool member;
+        uint256 voteCount;
+        mapping(address => uint256) voters;
+    }
+
     Proposal[] public proposals;
     uint256[] public acceptedProporsalsIds;
-    address[] public joinRequests;
+    JoinRequest[] public joinRequests;
 
     mapping(address => bool) public members;
     mapping(address => uint256) public lastIdeaPosted;
@@ -110,12 +119,37 @@ contract DAO {
         emit MembersUpdated("Member Removed");
     }
 
+    function voteJoinRequests(uint256 _joinReqId)public onlyMembers {
+        require(_joinReqId < joinRequestCount, "Invalid proposal ID");
+        require(members[joinRequests[_joinReqId].candidate]==false,"Already a Member");
+        JoinRequest storage joinRequest = joinRequests[_joinReqId];
+
+        
+        uint256 required_balance=(joinRequest.voters[msg.sender]**2)+1;
+        
+        require(tokenContract.balanceOf(msg.sender)>required_balance,"Not Enough Tokens");
+        tokenContract.burn(msg.sender,required_balance);
+        joinRequest.voters[msg.sender]++;
+        joinRequest.voteCount++;
+
+        if (joinRequest.voteCount * 2 > memberCount) {
+            joinRequest.member=true;
+            addMember(joinRequests[_joinReqId].candidate);
+            emit MembersUpdated("A new Member is Added");
+        }
+        emit JoiningReqEvent("Joint request Voted");
+        emit TokenUpdated("Some tokens are burned");
+    }
+
     function addJoinRequest(string memory _message) public{
         if(keccak256(bytes(joinRequestString[msg.sender]))==keccak256(bytes(""))){
-            joinRequestCount++;
-            joinRequests.push(msg.sender);
+            uint256 newJoinId = joinRequestCount++;
+            JoinRequest storage newReq = joinRequests.push();
+            newReq.id = newJoinId;
+            newReq.message = _message;
+            newReq.candidate = msg.sender;
+            joinRequestString[msg.sender]=_message;
         }
-        joinRequestString[msg.sender]=_message;
         emit JoiningReqEvent(_message);
     }
 
@@ -154,10 +188,12 @@ contract DAO {
             acceptedProporsalsIdsCount++;
         }
     }
-    function votePrize(address voter,uint256 proposalId)public view onlyMembers returns(uint){
-        return (proposals[proposalId].voters[voter]**2)+1;
+    function votePrize(uint256 proposalId)public view onlyMembers returns(uint){
+        return (proposals[proposalId].voters[msg.sender]**2)+1;
     }
 
-
+    function joinVotePrize(uint256 joinreqId)public view onlyMembers returns(uint){
+        return (joinRequests[joinreqId].voters[msg.sender]**2)+1;
+    }
 
 }

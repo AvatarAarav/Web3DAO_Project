@@ -82,17 +82,18 @@ const App = () => {
     const dao = globalDAO
     setActiveMembers(await dao.memberCount())
   };
+
   const fetchProporsals = async () => {
     const userDAO = globalDAO
-    const selectedAddress = globalAddress
     const proposalCount = await userDAO.proposalCount();
     const tempArray = []
     for (var i = proposalCount - 1; i >= 0; i--) {
-
-      let tempProp = await userDAO.proposals(i);
-      const prize = await userDAO.votePrize(selectedAddress, i)
-      tempProp = { prize, ...tempProp }
-      tempArray.push(tempProp)
+      let tempProp=await userDAO.proposals(i);
+      if(!tempProp.posted){
+        const prize=await userDAO.votePrize(i)
+        tempProp={prize,...tempProp}
+        tempArray.push(tempProp)
+      }
     }
     dispatch(setProporsals(tempArray))
   }
@@ -110,13 +111,15 @@ const App = () => {
   }
   const fetchJoinRequests = async () => {
     const userDAO = globalDAO
-    const requestCount = await userDAO.joinRequestCount();
+    const jointRequestCount = await userDAO.joinRequestCount();
     const tempArray = []
-    for (var i = requestCount - 1; i >= 0; i--) {
-      const tempAddress = await userDAO.joinRequests(i)
-      const tempProp = await userDAO.joinRequestString(tempAddress);
-
-      tempArray.push({ proposer: tempAddress, message: tempProp })
+    for (var i = jointRequestCount - 1; i >= 0; i--) {
+      let tempProp = await userDAO.joinRequests(i);
+      if (!tempProp.member) {
+        const prize = await userDAO.joinVotePrize(i)
+        tempProp = { prize, ...tempProp }
+        tempArray.push(tempProp)
+      }
     }
     dispatch(setJoinedProporsals(tempArray))
   }
