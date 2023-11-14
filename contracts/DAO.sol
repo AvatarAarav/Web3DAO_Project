@@ -68,19 +68,19 @@ contract DAO {
     }
 
     function provideStayingReward() public {
-        // uint interval=604800; //7 days
-        uint interval=60; //1min
+        uint interval=604800; //7 days
+        // uint interval=60; //1min
         if(lastRewardDistribTime[msg.sender]+interval<block.timestamp) {
             tokenContract.mint(msg.sender,50);
             lastRewardDistribTime[msg.sender]=block.timestamp;
         }
     }
     function slashingLazyPenality()public{
-        // uint interval=129600; //1.5 days
-        // uint penalityTime=86400; //1 day
+        uint interval=129600; //1.5 days
+        uint penalityTime=86400; //1 day
 
-        uint interval=120; //2min
-        uint penalityTime=60; //1min 
+        // uint interval=120; //2min
+        // uint penalityTime=60; //1min 
         if(lastIdeaPosted[msg.sender]+interval<block.timestamp){ 
             uint256 penality=10*(block.timestamp-lastIdeaPosted[msg.sender])/penalityTime;
             uint256 balance=tokenContract.balanceOf(msg.sender);
@@ -121,7 +121,11 @@ contract DAO {
 
     function voteJoinRequests(uint256 _joinReqId)public onlyMembers {
         require(_joinReqId < joinRequestCount, "Invalid proposal ID");
-        require(members[joinRequests[_joinReqId].candidate]==false,"Already a Member");
+        if(members[joinRequests[_joinReqId].candidate]==true){
+            joinRequests[_joinReqId].member=true;
+            emit JoiningReqEvent("Joint request Voted");
+            return;
+        }
         JoinRequest storage joinRequest = joinRequests[_joinReqId];
 
         
@@ -196,4 +200,4 @@ contract DAO {
         return (joinRequests[joinreqId].voters[msg.sender]**2)+1;
     }
 
-}
+}   

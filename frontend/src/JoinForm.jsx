@@ -11,7 +11,7 @@ const JoinForm = ({ userDAO, selectedAddress }) => {
         async function getPrevMess() {
             const message = await userDAO.joinRequestString(selectedAddress);
             if (message !== "") {
-                setButton('Edit');
+                setButton('Submitted');
             }
             setParagraph(message);
         }
@@ -42,7 +42,7 @@ const JoinForm = ({ userDAO, selectedAddress }) => {
                                 required
                             />
                         </div>
-                        <button type="submit" className="btn btn-primary">
+                        <button type="submit" className="btn btn-primary" disabled={button=="Submitted"}>
                             {button}
                         </button>
                     </form>
